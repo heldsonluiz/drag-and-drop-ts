@@ -12,7 +12,6 @@ class Project {
 
 /** PROJECT STATE MANAGEMENT */
 type Listener<T> = (items: T[]) => void
-
 class State<T> {
   protected listeners: Listener<T>[] = []
 
@@ -20,7 +19,6 @@ class State<T> {
     this.listeners.push(listenerFn)
   }
 }
-
 class ProjectState extends State<Project>{
   private projects: Project[] = []
   private static instance: ProjectState
@@ -62,7 +60,6 @@ interface Validatable {
   min?: number
   max?: number
 }
-
 function validate(validatableInput: Validatable) {
   let isValid = true
   if (validatableInput.required) {
@@ -126,11 +123,38 @@ abstract class Component<T extends HTMLElement, U extends HTMLElement> {
   private attach(insertAtStart: boolean) {
     this.hostElement.insertAdjacentElement(
       insertAtStart ? 'afterbegin' : 'beforeend',
-      this.element)
+      this.element
+    )
   }
 
   abstract configure(): void
   abstract renderContent(): void
+}
+
+/** PROJECT ITEM CLASS */
+class ProjectItem extends Component<HTMLUListElement, HTMLLIElement> {
+  private project: Project
+
+  get persons () {
+    if (this.project.people === 1) return '1 person'
+    else return `${this.project.people} persons`
+  }
+
+  constructor(hostId: string, project: Project){
+    super('single-project', hostId, false, project.id)
+    this.project = project
+
+    this.configure()
+    this.renderContent()
+  }
+
+  configure() {}
+
+  renderContent() {
+    this.element.querySelector('h2')!.textContent = this.project.title
+    this.element.querySelector('h3')!.textContent = this.persons + ' assigned'
+    this.element.querySelector('p')!.textContent = this.project.description
+  }
 }
 
 /** PROJECT LIST CLASS */
@@ -167,9 +191,7 @@ class ProjectList extends Component<HTMLDivElement, HTMLElement> {
     const listEl = document.getElementById(`${this.type}-projects-list`) as HTMLUListElement
     listEl.innerHTML = ''
     for (const prjItem of this.assignedProjects) {
-      const listItem = document.createElement('li')
-      listItem.textContent = prjItem.title
-      listEl.appendChild(listItem)
+      new ProjectItem(this.element.querySelector('ul')!.id, prjItem)
     }
   }
 
